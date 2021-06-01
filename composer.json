@@ -1,0 +1,28 @@
+{
+    "name": "retroace/storage",
+    "description": "Storage adapter for ekcms",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Rajesh Paudel",
+            "email": "rajeshdpaudel@gmail.com"
+        }
+    ],
+    "require": {
+        "league/flysystem": "~1.0"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Retroace\\Storage\\EkcdnServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Retroace\\Storage\\": "src/"
+        }
+    }
+}
