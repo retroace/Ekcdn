@@ -9,6 +9,7 @@ use Illuminate\Support\Traits\Macroable;
 use League\Flysystem\Adapter\Polyfill\NotSupportingVisibilityTrait;
 use League\Flysystem\AdapterInterface;
 use League\Flysystem\Config;
+use League\Flysystem\Util;
 use League\Flysystem\Util\MimeType;
 use LogicException;
 use Maatwebsite\Excel\Facades\Excel;
@@ -26,11 +27,11 @@ class HttpsAdapter implements AdapterInterface
      */
     protected $base;
 
-     /**
-     * The base URL.
-     *
-     * @var string
-     */
+    /**
+    * The base URL.
+    *
+    * @var string
+    */
     protected $baseClient;
 
     /**
@@ -113,8 +114,7 @@ class HttpsAdapter implements AdapterInterface
      */
     public function delete($path)
     {
-        if(!str_contains($path, "."))
-        {
+        if (!str_contains($path, ".")) {
             throw new LogicException("You must provide file name for delete. Did you mean delete directory?");
         }
 
@@ -130,8 +130,7 @@ class HttpsAdapter implements AdapterInterface
      */
     public function deleteDir($path)
     {
-        if(str_contains($path, "."))
-        {
+        if (str_contains($path, ".")) {
             throw new LogicException("You must provide valid folder name to delete. Did you mean to delete file?");
         }
 
@@ -145,7 +144,7 @@ class HttpsAdapter implements AdapterInterface
 
     public function getPathPrefix()
     {
-        return $this->context['url'] ;
+        return $this->baseClient;
     }
 
     /**
@@ -200,9 +199,9 @@ class HttpsAdapter implements AdapterInterface
      */
     public function has($path)
     {
-        try{
+        try {
             return (bool) $this->assetsRequest->hasFile($path);
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             return false;
         }
     }
@@ -212,13 +211,12 @@ class HttpsAdapter implements AdapterInterface
      */
     public function listContents($directory = '', $recursive = false)
     {
-
         $response = $this->client->post('api/v1/list', [
             'directory' => $directory,
             'recursive' => $recursive
         ]);
-
         $data = json_decode($response, true)['data'];
+
         return $data;
     }
 
@@ -299,8 +297,13 @@ class HttpsAdapter implements AdapterInterface
      */
     public function updateStream($path, $resource, Config $config)
     {
-        throw new \LogicException("Updating via strem is not supported", 400);
-        return false;
+        $path = Util::normalizePath($path);
+        $response = $this->client->post('api/v1/upload-stream', [
+            'filename' => $path,
+            'content' => stream_get_contents($resource)
+        ]);
+
+        return $response;
     }
 
     /**
@@ -321,7 +324,7 @@ class HttpsAdapter implements AdapterInterface
         $allPath = $directory."/".$fileName;
         $content = $contents->getPathName();
 
-        $path = $this->client->post('api/v1/upload' ,['file' => new CURLFile($content),'directory' => $allPath,'makeDirectory' => 'true']);
+        $path = $this->client->post('api/v1/upload', ['file' => new CURLFile($content),'directory' => $allPath,'makeDirectory' => 'true']);
 
         return true;
     }
@@ -331,6 +334,7 @@ class HttpsAdapter implements AdapterInterface
      */
     public function writeStream($path, $resource, Config $config)
     {
+        dd("STREAM WRITE", $path, stream_get_contents($resource), $config);
         return false;
     }
 
@@ -418,28 +422,5 @@ class HttpsAdapter implements AdapterInterface
         }
 
         return $metadata;
-    }
-
-    /**
-     * Parses the mimetype out of response headers.
-     *
-     * @param string $path
-     * @param array  $headers
-     *
-     * @return string
-     */
-    protected function parseMimeType($path, array $headers)
-    {
-        if (isset($headers['content-type'])) {
-            list($mimetype) = explode(';', $headers['content-type'], 2);
-
-            return trim($mimetype);
-        }
-
-        // Remove any query strings or fragments.
-        list($path) = explode('#', $path, 2);
-        list($path) = explode('?', $path, 2);
-
-        return MimeType::detectByFilename($path);
     }
 }

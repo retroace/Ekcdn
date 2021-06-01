@@ -33,3 +33,12 @@ EKCDN_STORAGE_URL=http://ekcdn.ekbana.info
 EKCDN_ASSET_PREFIX_URL=http://subdomain.devcdn.ekbana.com
 EKCDN_API_KEY=RANDOM_API_KEY_GENERATED_FROM_PROJECT
 ```
+
+
+
+### Uploading File 
+
+To upload file from the config use
+```
+    Storage::disk('ekcdn')->putFileAs("/user/avatar", Request::file('my_image'), "my_image.png");
+```

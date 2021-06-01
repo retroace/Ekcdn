@@ -4,16 +4,20 @@ namespace Retroace\Storage\Adapter;
 use Exception;
 use LogicException;
 
-class CurlRequest{
-
+class CurlRequest
+{
     public function __construct($baseUrl, $headers = [])
     {
         $this->headers = $headers;
         $this->baseUrl = $baseUrl;
     }
 
-
-    protected function getUrl($url)
+    /**
+     * Get url of the site
+     * @param string $url
+     * @return string
+     */
+    protected function getUrl($url = "")
     {
         return sprintf('%s/%s', $this->baseUrl, $url);
     }
@@ -24,7 +28,8 @@ class CurlRequest{
      * @param string $url
      * @return bool
      */
-    public function hasFile($url) {
+    public function hasFile($url)
+    {
         return curl_init($this->getUrl($url)) !== false;
     }
 
@@ -37,7 +42,7 @@ class CurlRequest{
      */
     public function post($url, $body, $headers = ["Accept: application/json"])
     {
-        try{
+        try {
             $curl = curl_init();
 
             curl_setopt_array($curl, [
@@ -63,17 +68,16 @@ class CurlRequest{
             }
 
             curl_close($curl);
-            if($statusCode > 300) {
+            if ($statusCode > 300) {
                 $data = json_decode($response, true)['error'];
                 throw new LogicException($data, $statusCode);
             }
 
             return $response;
-        }catch(LogicException $e){
+        } catch (LogicException $e) {
             throw new Exception($e->getMessage(), $e->getCode());
-        }catch(Exception $e){
+        } catch (Exception $e) {
             throw new Exception("Curl error: $e", $e->getCode());
         }
     }
-
 }
