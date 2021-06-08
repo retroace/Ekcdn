@@ -16,6 +16,10 @@ class EkcdnServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        $this->mergeConfigFrom(
+            __DIR__.'/config/filesystems.php',
+            'filesystems.disks.ekcdn'
+        );
         //
     }
 
@@ -27,8 +31,9 @@ class EkcdnServiceProvider extends ServiceProvider
     public function boot()
     {
         //
-        Storage::extend('ekcdn-storage', function ($app, $config) {
-            return new Filesystem(new HttpsAdapter($config['domainUrl'], true, [], [
+
+        Storage::extend('ekcdn-storage', function () {
+            return new Filesystem(new HttpsAdapter(config('filesystems.disks.ekcdn.domainUrl'), true, [], [
                 "headers" =>[
                     'apiKey' => config('filesystems.disks.ekcdn.apiKey')
                 ],

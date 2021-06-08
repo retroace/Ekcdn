@@ -13,13 +13,14 @@ use League\Flysystem\Util;
 use League\Flysystem\Util\MimeType;
 use LogicException;
 use Maatwebsite\Excel\Facades\Excel;
+use Retroace\Storage\Traits\HasUrl;
 
 /**
  * Provides an adapter using PHP native HTTP functions.
  */
 class HttpsAdapter implements AdapterInterface
 {
-    use Macroable, NotSupportingVisibilityTrait;
+    use Macroable, NotSupportingVisibilityTrait, HasUrl;
     /**
      * The base URL.
      *
@@ -94,19 +95,6 @@ class HttpsAdapter implements AdapterInterface
         $response = $this->client->post('api/v1/make-directory', [ 'path' => $path ]);
 
         return (bool) $response;
-    }
-
-
-    /**
-     * get url of the image
-     * @param string $url
-     * @return string
-     */
-    protected function getUrl($url, $client = false)
-    {
-        $path = str_replace('%2F', '/', $url);
-        $path = str_replace(' ', '%20', $path);
-        return sprintf('%s/%s', $client  ? $this->baseClient : $this->base, $path);
     }
 
     /**
@@ -226,7 +214,7 @@ class HttpsAdapter implements AdapterInterface
     public function read($path)
     {
         $context = stream_context_create($this->context);
-        $contents = file_get_contents($this->getUrl($path, true), false, $context);
+        $contents = file_get_contents($this->getUrl($path, false), false, $context);
 
         if ($contents === false) {
             return false;
@@ -241,7 +229,7 @@ class HttpsAdapter implements AdapterInterface
     public function readStream($path)
     {
         $context = stream_context_create($this->context);
-        $stream = fopen($this->getUrl($path, true), 'rb', false, $context);
+        $stream = fopen($this->getUrl($path, false), 'rb', false, $context);
 
         if ($stream === false) {
             return false;
@@ -324,7 +312,7 @@ class HttpsAdapter implements AdapterInterface
         $allPath = $directory."/".$fileName;
         $content = $contents->getPathName();
 
-        $path = $this->client->post('api/v1/upload', ['file' => new CURLFile($content),'directory' => $allPath,'makeDirectory' => 'true']);
+        $this->client->post('api/v1/upload', ['file' => new CURLFile($content),'directory' => $allPath,'makeDirectory' => 'true']);
 
         return true;
     }
@@ -334,24 +322,17 @@ class HttpsAdapter implements AdapterInterface
      */
     public function writeStream($path, $resource, Config $config)
     {
-        dd("STREAM WRITE", $path, stream_get_contents($resource), $config);
-        return false;
+        $path = Util::normalizePath($path);
+        $response = $this->client->post('api/v1/upload-stream', [
+            'filename' => $path,
+            'makeDirectory' => 'true',
+            'content' => stream_get_contents($resource)
+        ]);
+
+        return $response;
     }
 
-    /**
-     * Returns the URL to perform an HTTP request.
-     *
-     * @param string $path
-     *
-     * @return string
-     */
-    protected function buildUrl($path)
-    {
-        $path = str_replace('%2F', '/', $path);
-        $path = str_replace(' ', '%20', $path);
 
-        return rtrim($this->base, '/') . '/' . $path;
-    }
 
     /**
      * Performs a HEAD request.
@@ -371,7 +352,7 @@ class HttpsAdapter implements AdapterInterface
 
         stream_context_set_default($options);
 
-        $headers = get_headers($this->buildUrl($path), 1);
+        $headers = get_headers($this->getUrl($path, false), 1);
 
         stream_context_set_default($defaults);
         if ($headers === false || strpos($headers[0], ' 200') === false) {

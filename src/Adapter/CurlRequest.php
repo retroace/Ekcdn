@@ -3,9 +3,11 @@ namespace Retroace\Storage\Adapter;
 
 use Exception;
 use LogicException;
+use Retroace\Storage\Traits\HasCustomException;
 
 class CurlRequest
 {
+    use HasCustomException;
     public function __construct($baseUrl, $headers = [])
     {
         $this->headers = $headers;
@@ -30,7 +32,8 @@ class CurlRequest
      */
     public function hasFile($url)
     {
-        return curl_init($this->getUrl($url)) !== false;
+        $headers = get_headers($this->getUrl($url));
+        return !str_contains($headers[0], '404');
     }
 
     /**
@@ -68,16 +71,14 @@ class CurlRequest
             }
 
             curl_close($curl);
+            $data = json_decode($response, true);
             if ($statusCode > 300) {
-                $data = json_decode($response, true)['error'];
-                throw new LogicException($data, $statusCode);
+                return $this->parseResponseAndThrowError($data);
             }
 
-            return $response;
+            return $data;
         } catch (LogicException $e) {
             throw new Exception($e->getMessage(), $e->getCode());
-        } catch (Exception $e) {
-            throw new Exception("Curl error: $e", $e->getCode());
         }
     }
 }
