@@ -26,19 +26,32 @@ Put these in the config/fileystems.php file and make sure to add the config url
 Replace your subdomain name with subdomain in the url. And put your key in ```EKCDN_API_KEY```.
 
 
-And put your credential in .env file. Ideally these would look something like below
-
-```
-EKCDN_STORAGE_URL=http://ekcdn.ekbana.info
-EKCDN_ASSET_PREFIX_URL=http://subdomain.devcdn.ekbana.com
-EKCDN_API_KEY=RANDOM_API_KEY_GENERATED_FROM_PROJECT
-```
-
-
 
 ### Uploading File 
 
 To upload file from the config use
 ```
-    Storage::disk('ekcdn')->putFileAs("/user/avatar", Request::file('my_image'), "my_image.png");
+    Storage::disk('ekcdn')->putFileAs("/user/avatar", Request::file('my_image'), "my_image.png"); // return appropriate file name
+    Storage::disk('ekcdn')->putFile("/user/avatar", Request::file('my_image')); // returns random image name with path
+```
+### Getting File Url 
+To get file url use any of the following
+
+```
+    Storage::disk('ekcdn')->url("/user/avatar/my_image.png");
+    Storage::disk('ekcdn')->path("/user/avatar/my_image.png");
+```
+
+## Exception Handling
+When uploading any assets the exception thrown by the library extends **RuntimeException** of php. The exceptions thrown by system are:
+```
+Retroace\Storage\Exceptions\CorsException
+Retroace\Storage\Exceptions\DomainNotAllowedException
+Retroace\Storage\Exceptions\ExceededDiskUsageException
+Retroace\Storage\Exceptions\FileNotAllowedException
+Retroace\Storage\Exceptions\FileNotFoundException
+Retroace\Storage\Exceptions\FilePostLimitException
+Retroace\Storage\Exceptions\InvalidApiKeyException
+Retroace\Storage\Exceptions\UnverifiedUserException
+\Exception
 ```
