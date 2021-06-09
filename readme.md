@@ -13,14 +13,12 @@ domainUrl      - Domain of ekcdn https://ekcdn.ekbana.info
 
 ### Usage
 
-Put these in the config/fileystems.php file and make sure to add the config url 
+Put these in the .env file and make sure to add the proper urls 
+
 ```
-'ekcdn' => [
-    'driver' => 'ekcdn-storage',
-    'url' => env('EKCDN_ASSET_PREFIX_URL'),
-    'apiKey' => env('EKCDN_API_KEY'),
-    'domainUrl' =>  env('EKCDN_STORAGE_URL', "https://ekcdn.ekbana.info")
-]
+EKCDN_ASSET_PREFIX_URL=
+EKCDN_API_KEY=
+EKCDN_STORAGE_URL=https://ekcdn.ekbana.info
 ```
 
 Replace your subdomain name with subdomain in the url. And put your key in ```EKCDN_API_KEY```.
